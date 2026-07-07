@@ -1,0 +1,242 @@
+<!--
+  Hetz Electrical — EV Charger Scroll Hero
+  =========================================
+  Paste this ENTIRE block into a Webflow "Embed" (HTML Embed) component,
+  placed where you want the hero section to appear in the page.
+
+  This embed contains structure + styles + behavior in one self-contained
+  block, so it can be dropped in without touching global Site Settings.
+  (If you'd rather split it up, the CSS can go in an Embed <style> in the
+  page <head>, and hero.js can be added via "before </body> tag" custom
+  code — see README.md for that variant.)
+
+  REQUIRED BEFORE THIS WORKS:
+  1. Upload /assets/hetz-ev-hero.mp4 to Webflow's Asset Manager (or your
+     own CDN / Cloudflare R2 / Bunny / Cloudinary) and replace VIDEO_SRC
+     below with the resulting URL.
+  2. Upload /assets/hetz-ev-hero-wide-reveal.png the same way and replace
+     WIDE_REVEAL_SRC below.
+-->
+
+<section class="ev-hero" id="ev-hero">
+  <div class="ev-hero__pin">
+    <div class="ev-hero__media">
+      <video
+        class="ev-hero__video"
+        id="evHeroVideo"
+        muted
+        playsinline
+        preload="auto"
+        src="VIDEO_SRC"
+      ></video>
+      <img
+        class="ev-hero__wide-reveal"
+        id="evHeroWideReveal"
+        src="WIDE_REVEAL_SRC"
+        alt="Hetz Electrical EV charger installed on a home driveway at dusk"
+      />
+      <div class="ev-hero__scrim"></div>
+    </div>
+
+    <div class="ev-hero__text">
+      <div class="ev-hero__chapter" data-chapter="1">
+        <p class="ev-hero__eyebrow">01 — The Current</p>
+        <h2 class="ev-hero__headline">It all starts with one clean connection.</h2>
+      </div>
+      <div class="ev-hero__chapter" data-chapter="2">
+        <p class="ev-hero__eyebrow">02 — Contact</p>
+        <h2 class="ev-hero__headline">Certified. Tested. Ready to charge.</h2>
+      </div>
+      <div class="ev-hero__chapter" data-chapter="3">
+        <p class="ev-hero__eyebrow">03 — Home</p>
+        <h2 class="ev-hero__headline">Tesla-Certified Wall Connector installs<br>(and all major brands) — with the panel handled.</h2>
+        <a href="#quote" class="ev-hero__cta">Get a free quote</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .ev-hero {
+    position: relative;
+    height: 400vh; /* scroll distance for the whole sequence — tune to taste */
+    background: #0b0d12;
+  }
+
+  .ev-hero__pin {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .ev-hero__media {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .ev-hero__video,
+  .ev-hero__wide-reveal {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .ev-hero__wide-reveal {
+    opacity: 0;
+    transition: opacity 0.6s ease;
+    pointer-events: none;
+  }
+
+  .ev-hero__wide-reveal.is-visible {
+    opacity: 1;
+  }
+
+  .ev-hero__video.is-hidden {
+    opacity: 0;
+  }
+
+  .ev-hero__scrim {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0,0,0,0.35) 0%, rgba(0,0,0,0.05) 30%, rgba(0,0,0,0.05) 70%, rgba(0,0,0,0.55) 100%);
+    pointer-events: none;
+  }
+
+  .ev-hero__text {
+    position: relative;
+    z-index: 2;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    padding: 0 8vw;
+  }
+
+  .ev-hero__chapter {
+    position: absolute;
+    max-width: 560px;
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    pointer-events: none;
+  }
+
+  .ev-hero__chapter.is-active {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  .ev-hero__eyebrow {
+    color: #6fa8ff;
+    font-size: 14px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin: 0 0 12px;
+    font-weight: 600;
+  }
+
+  .ev-hero__headline {
+    color: #ffffff;
+    font-size: clamp(28px, 4vw, 48px);
+    line-height: 1.15;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .ev-hero__cta {
+    display: inline-block;
+    margin-top: 28px;
+    padding: 14px 28px;
+    background: #2f4bd6;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 15px;
+  }
+
+  @media (max-width: 768px) {
+    .ev-hero { height: 300vh; }
+    .ev-hero__text { padding: 0 6vw; }
+  }
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script>
+  (function () {
+    function init() {
+      gsap.registerPlugin(ScrollTrigger);
+
+      var section = document.getElementById('ev-hero');
+      var video = document.getElementById('evHeroVideo');
+      var wideReveal = document.getElementById('evHeroWideReveal');
+      var chapters = section.querySelectorAll('.ev-hero__chapter');
+
+      // Chapter boundaries as a fraction of total scroll progress (0–1).
+      // Tuned to the video's own timeline (10s total):
+      //   0.0–0.40 = 0.0s–4.0s  -> chapter 1 (cable flythrough)
+      //   0.40–0.60 = 4.0s–6.0s -> chapter 2 (iris opens into charger)
+      //   0.60–1.0  = 6.0s–10s  -> chapter 3 (settle + wide reveal swap-in)
+      var CHAPTER_BOUNDARIES = [0, 0.40, 0.60, 1.01];
+      var WIDE_REVEAL_AT = 0.62; // swap static wide photo in just after the dissolve settles
+
+      function setActiveChapter(progress) {
+        var index = 0;
+        for (var i = 0; i < CHAPTER_BOUNDARIES.length - 1; i++) {
+          if (progress >= CHAPTER_BOUNDARIES[i] && progress < CHAPTER_BOUNDARIES[i + 1]) {
+            index = i;
+            break;
+          }
+        }
+        chapters.forEach(function (el, i) {
+          el.classList.toggle('is-active', i === index);
+        });
+      }
+
+      function onReady() {
+        var duration = video.duration || 10;
+
+        ScrollTrigger.create({
+          trigger: section,
+          start: 'top top',
+          end: 'bottom bottom',
+          scrub: 0.4,
+          onUpdate: function (self) {
+            var progress = self.progress;
+
+            // Scrub the video's playhead directly off scroll position.
+            // Maps progress range [0, WIDE_REVEAL_AT] -> video time [0, duration].
+            var clamped = Math.min(progress / WIDE_REVEAL_AT, 1);
+            video.currentTime = clamped * duration;
+
+            // Swap to the static wide photo once we're past the dissolve,
+            // so we don't need to render/hold video past its last frame.
+            var showWide = progress >= WIDE_REVEAL_AT;
+            wideReveal.classList.toggle('is-visible', showWide);
+            video.classList.toggle('is-hidden', showWide);
+
+            setActiveChapter(progress);
+          },
+        });
+      }
+
+      if (video.readyState >= 1) {
+        onReady();
+      } else {
+        video.addEventListener('loadedmetadata', onReady, { once: true });
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  })();
+</script>
