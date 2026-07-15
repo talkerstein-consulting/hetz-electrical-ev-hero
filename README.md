@@ -9,32 +9,29 @@ pinned text panel that swaps captions per "chapter" as the user scrolls.
 
 ```
 assets/
-  hetz-ev-hero.mp4              10s, 1920x1080 (16:9), the scroll-scrubbed video
-  hetz-ev-hero-wide-reveal.png  Static photo shown after the video's final chapter
+  hetz-ev-hero.mp4              4.5s, 1920x1080 (16:9), the scroll-scrubbed video
+  hetz-ev-hero-wide-reveal.png  Static photo (video's last frame) shown after the video ends
 webflow/
   hero-embed.html               Drop-in Webflow Embed block (HTML + CSS + JS)
 ```
 
 ## The video
 
-One continuous 10-second, 16:9 shot, generated with fal.ai (Kling 2.5 Turbo
-Pro image-to-video, start+end frame interpolation):
+One continuous 4.5-second, 16:9 shot:
 
 | Time | Chapter | Visual |
 |---|---|---|
-| 0.0s–4.0s | 01 — The Current | Camera flies through the inside of a cable — copper strands and a blue energy pulse rushing past |
-| 4.0s–6.0s | 02 — Contact | Camera bursts out through an iris/aperture, resolving into a photoreal close-up of the actual wall-mounted EV charger, glowing indicator ring |
-| 6.0s–10s | 03 — Home | Camera settles; scroll then swaps to the static wide photo (`hetz-ev-hero-wide-reveal.png`) showing the full driveway/charger/car scene, for the resting frame under the final caption + CTA |
+| 0.0s–~1.5s | 01 — The Current | Camera flies through a glowing energy tunnel — blue current with red/yellow charge lines rushing toward a bright convergence point |
+| ~1.5s–~3.5s | 02 — Contact | Close-up of a wall-connector cable being plugged into the charge port of a purple EV in a garage |
+| ~3.5s–4.5s | 03 — Home | Camera settles into a wide side profile of the car parked next to the mounted wall charger; scroll then swaps to the static wide photo (`hetz-ev-hero-wide-reveal.png`, extracted from the video's last frame) for the resting frame under the final caption + CTA |
 
 The video is muted with no audio track — it's a background element, not a
 video-with-sound.
 
-**Known cosmetic note:** there's a faint mark near the top of the charger
-housing around the 6s–10s mark that wasn't verifiable against the source
-photo (that area was outside the original crop used to anchor the
-generation). It reads as a generic charger badge/notch at normal viewing
-size, but flagging it in case a designer wants to touch it up or blur it in
-an editing pass.
+The chapter boundary timestamps above are approximate — re-check them against
+the actual footage if the captions ever feel out of sync with the visuals,
+and adjust `CHAPTER_BOUNDARIES` in `hero-embed.html` accordingly (see Tuning
+below).
 
 ## Setting it up in Webflow
 
@@ -73,9 +70,12 @@ small amount of custom code. Everything required is self-contained in
   scroll feel slower/faster.
 - **Chapter boundaries**: `CHAPTER_BOUNDARIES` and `WIDE_REVEAL_AT` in the
   `<script>` block map scroll progress (0–1) to the video's actual
-  timeline (0s–10s) and to the moment the static wide photo swaps in.
-  These are already tuned to the video's content (see table above) — only
-  change them if the video itself changes.
+  timeline (0s–4.5s) and to the moment the static wide photo swaps in.
+  They're expressed as fractions of total scroll progress, not absolute
+  seconds, so they don't need to change just because the video's duration
+  changed — but re-tune them if the new chapter cut points land at
+  different fractions of the video (see table above for the current
+  approximate cut points).
 - **Copy**: the three `.ev-hero__chapter` blocks in the HTML hold the
   eyebrow/headline text per chapter — edit directly.
 
@@ -89,18 +89,13 @@ instead of pinned — flagging this as a possible follow-up, not built here.
 
 ## Source assets / regeneration
 
-If the video ever needs to be regenerated or extended, it was built via:
+The current `hetz-ev-hero.mp4` is a client-supplied video (replacing an
+earlier fal.ai-generated version). `hetz-ev-hero-wide-reveal.png` is simply
+the video's last frame, extracted with ffmpeg:
 
-1. A still image looking into a cable's cross-section (fal.ai
-   `flux-pro/v1.1`) as the start anchor.
-2. A tight crop of the real charger photo (`hetz-ev-hero-wide-reveal.png`,
-   cropped to just the charger) as the end anchor.
-3. A single `fal-ai/kling-video/v2.5-turbo/pro/image-to-video` call at
-   `duration: "10"` with both anchors set (`image_url` / `tail_image_url`),
-   describing the full camera journey in one prompt — letting the model
-   interpolate the whole arc in one pass rather than stitching separate
-   clips together.
+```
+ffmpeg -sseof -0.1 -i hetz-ev-hero.mp4 -frames:v 1 -q:v 2 hetz-ev-hero-wide-reveal.png
+```
 
-This single-call, dual-anchor approach avoided artifacts that came up when
-earlier attempts stitched two independently-generated clips together
-(mismatched objects at the seam).
+If the video is swapped again, re-run that extraction so the wide-reveal
+photo keeps matching the video's final frame.

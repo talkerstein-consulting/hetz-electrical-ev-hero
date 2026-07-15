@@ -179,10 +179,10 @@
       var chapters = section.querySelectorAll('.ev-hero__chapter');
 
       // Chapter boundaries as a fraction of total scroll progress (0–1).
-      // Tuned to the video's own timeline (10s total):
-      //   0.0–0.40 = 0.0s–4.0s  -> chapter 1 (cable flythrough)
-      //   0.40–0.60 = 4.0s–6.0s -> chapter 2 (iris opens into charger)
-      //   0.60–1.0  = 6.0s–10s  -> chapter 3 (settle + wide reveal swap-in)
+      // Tuned to the video's own timeline (~4.5s total):
+      //   0.0–0.40 = 0.0s–~1.5s  -> chapter 1 (energy tunnel flythrough)
+      //   0.40–0.60 = ~1.5s–~3.5s -> chapter 2 (cable plugged into car)
+      //   0.60–1.0  = ~3.5s–4.5s  -> chapter 3 (settle + wide reveal swap-in)
       var CHAPTER_BOUNDARIES = [0, 0.40, 0.60, 1.01];
       var WIDE_REVEAL_AT = 0.62; // swap static wide photo in just after the dissolve settles
 
